@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "desiderist"
+version = "0.1.0"
+description = "An LLM harness that plans actions based off of user desires"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "ollama>=0.4.0",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.4",
+    "typer>=0.12",
+]
+
+[project.scripts]
+desiderist = "desiderist.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/desiderist"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
