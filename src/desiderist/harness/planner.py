@@ -7,16 +7,22 @@ from desiderist.persistence.repositories import ActionLogRepo
 PLANNING_SYSTEM_PROMPT = """\
 You are the planning component of a harness that takes actions on behalf of a user in
 order to fulfill their desires. Given the user's currently active desires and the recent
-conversation, decide what action(s) to take next. You must call at least one of the
-available actions — even a plain reply to the user is expressed by calling the
+conversation, decide what action(s) to take next. The user has no visibility into this
+harness beyond what you send them via communicate_with_user — they cannot see your
+reasoning, the desire list, or any other internal state, so if something needs to reach
+them, it must go through that action. You must call at least one of the available
+actions — even a plain reply to the user is expressed by calling the
 communicate_with_user action.
+
+Priority is 1-5 (5 = most important); confidence is 0.0-1.0 (how sure the harness is
+this desire is real and current). Weigh both when deciding which desire to act on.
 """
 
 
 def _format_active_desires(desires: list[Desire]) -> str:
     if not desires:
         return "(none)"
-    return "\n".join(f"- [{d.id}] {d.description} (priority={d.priority})" for d in desires)
+    return "\n".join(f"- [{d.id}] {d.description} (priority={d.priority}, confidence={d.confidence})" for d in desires)
 
 
 def plan_next_actions(

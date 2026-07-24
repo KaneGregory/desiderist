@@ -1,10 +1,12 @@
 from desiderist.actions.base import ActionContext, ActionResult
 from desiderist.actions.registry import register_action
 
+COMMUNICATE_WITH_USER = "communicate_with_user"
+
 
 @register_action
 class CommunicateWithUserAction:
-    name = "communicate_with_user"
+    name = COMMUNICATE_WITH_USER
     description = "Send a message to the user via their current channel (CLI)."
     input_schema = {
         "type": "object",

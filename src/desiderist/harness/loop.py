@@ -1,5 +1,6 @@
 import desiderist.actions  # noqa: F401 — registers built-in actions
 from desiderist.actions.base import ActionContext, ActionResult
+from desiderist.actions.communicate import COMMUNICATE_WITH_USER
 from desiderist.desires.extraction import extract_desire_ops
 from desiderist.desires.store import DesireStore
 from desiderist.harness.planner import dispatch_tool_calls, plan_next_actions
@@ -18,7 +19,7 @@ def _with_fallback_reply(response: LLMResponse) -> LLMResponse:
     return response.model_copy(
         update={
             "tool_calls": [
-                ToolCall(id="fallback_reply", name="communicate_with_user", input={"message": response.text})
+                ToolCall(id="fallback_reply", name=COMMUNICATE_WITH_USER, input={"message": response.text})
             ]
         }
     )

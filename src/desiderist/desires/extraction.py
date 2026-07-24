@@ -2,7 +2,11 @@ from desiderist.desires.models import Desire, ExtractionResult
 from desiderist.llm.base import LLMProvider, Message, Role
 
 EXTRACTION_SYSTEM_PROMPT = """\
-You track a user's desires (goals or wants) as they emerge in conversation.
+You track a user's desires (goals or wants) as they emerge in conversation, as part of a
+harness that will autonomously plan and take actions to fulfill them. Because a
+downstream planning step acts on whatever you report, only report a change when the
+user's message actually supports it — do not infer desires from speculation,
+hypotheticals, or passing mentions.
 
 Given the user's currently tracked active desires and their latest message, decide what,
 if anything, changed. Respond with a list of operations:

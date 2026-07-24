@@ -1,5 +1,6 @@
 import desiderist.actions  # noqa: F401 — registers built-in actions
 from desiderist.actions.base import ActionContext
+from desiderist.desires.models import Desire, DesireStatus
 from desiderist.desires.store import DesireStore
 from desiderist.harness.planner import dispatch_tool_calls, plan_next_actions
 from desiderist.llm.base import LLMResponse, Message, Role, ToolCall
@@ -32,6 +33,34 @@ def test_plan_next_actions_forces_tool_use():
     assert response.stop_reason == "tool_use"
     assert provider.complete_calls[0]["tool_choice"] == "any"
     assert {t.name for t in provider.complete_calls[0]["tools"]} == {"communicate_with_user"}
+
+
+def test_plan_next_actions_includes_desire_confidence_in_system_prompt():
+    desire = Desire(
+        id="d1",
+        user_id="local-user",
+        description="wants coffee",
+        status=DesireStatus.ACTIVE,
+        priority=4,
+        confidence=0.85,
+        created_at="2026-01-01T00:00:00+00:00",
+        updated_at="2026-01-01T00:00:00+00:00",
+        source_turn_id="t0",
+        last_touched_turn_id="t0",
+    )
+    canned = LLMResponse(
+        text=None,
+        tool_calls=[ToolCall(id="t1", name="communicate_with_user", input={"message": "hi"})],
+        stop_reason="tool_use",
+        raw={},
+    )
+    provider = FakeLLMProvider(complete_responses=[canned])
+
+    plan_next_actions(
+        provider, active_desires=[desire], recent_turns=[Message(role=Role.USER, content="hello")]
+    )
+
+    assert "confidence=0.85" in provider.complete_calls[0]["system"]
 
 
 def test_dispatch_tool_calls_executes_action_and_logs_it(capsys):
