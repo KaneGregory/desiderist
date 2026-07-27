@@ -69,6 +69,60 @@ def test_desire_event_repo_history():
     assert history[0]["op"] == "create"
 
 
+def test_desire_repo_upsert_allows_null_turn_ids():
+    _, _, desires, *_ = make_repos()
+
+    desire = {
+        "id": "d1",
+        "user_id": "local-user",
+        "description": "system-seeded desire",
+        "status": "active",
+        "priority": 3,
+        "confidence": 1.0,
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "updated_at": "2026-01-01T00:00:00+00:00",
+        "source_turn_id": None,
+        "last_touched_turn_id": None,
+        "supersedes_id": None,
+    }
+    desires.upsert(desire)
+
+    stored = desires.get("d1")
+    assert stored["source_turn_id"] is None
+    assert stored["last_touched_turn_id"] is None
+
+
+def test_desire_event_repo_allows_null_turn_id():
+    _, _, _, events, _ = make_repos()
+
+    events.add_event(
+        desire_id="d1",
+        op="create",
+        reasoning="system-seeded",
+        diff={"description": "system-seeded desire"},
+        raw_llm_response="",
+        turn_id=None,
+    )
+    history = events.history("d1")
+    assert len(history) == 1
+    assert history[0]["turn_id"] is None
+
+
+def test_action_log_repo_allows_null_turn_id():
+    *_, action_log = make_repos()
+
+    action_log.add_entry(
+        action_name="communicate_with_user",
+        params={"message": "hello"},
+        result={},
+        success=True,
+        turn_id=None,
+    )
+    recent = action_log.recent()
+    assert len(recent) == 1
+    assert recent[0]["turn_id"] is None
+
+
 def test_action_log_repo_records_and_lists():
     _, conversations, *_rest, action_log = make_repos()
     turn = conversations.add_turn(role="user", content="hi")

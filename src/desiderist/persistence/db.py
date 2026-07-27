@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS desires (
     confidence REAL NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    source_turn_id TEXT NOT NULL REFERENCES conversation_turns(id),
-    last_touched_turn_id TEXT NOT NULL REFERENCES conversation_turns(id),
+    source_turn_id TEXT REFERENCES conversation_turns(id),
+    last_touched_turn_id TEXT REFERENCES conversation_turns(id),
     supersedes_id TEXT REFERENCES desires(id)
 );
 
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS desire_events (
     reasoning TEXT NOT NULL,
     diff_json TEXT NOT NULL,
     raw_llm_response TEXT NOT NULL,
-    turn_id TEXT NOT NULL REFERENCES conversation_turns(id),
+    turn_id TEXT REFERENCES conversation_turns(id),
     created_at TEXT NOT NULL
 );
 
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS action_log (
     params_json TEXT NOT NULL,
     result_json TEXT NOT NULL,
     success INTEGER NOT NULL,
-    turn_id TEXT NOT NULL REFERENCES conversation_turns(id),
+    turn_id TEXT REFERENCES conversation_turns(id),
     related_desire_ids_json TEXT,
     created_at TEXT NOT NULL
 );

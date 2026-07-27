@@ -86,7 +86,7 @@ class DesireEventRepo:
         self._conn = conn
 
     def add_event(
-        self, *, desire_id: str, op: str, reasoning: str, diff: dict, raw_llm_response: str, turn_id: str
+        self, *, desire_id: str, op: str, reasoning: str, diff: dict, raw_llm_response: str, turn_id: str | None
     ) -> dict:
         event = {
             "id": new_id(),
@@ -125,7 +125,7 @@ class ActionLogRepo:
         params: dict,
         result: dict,
         success: bool,
-        turn_id: str,
+        turn_id: str | None,
         related_desire_ids: list[str] | None = None,
     ) -> dict:
         entry = {

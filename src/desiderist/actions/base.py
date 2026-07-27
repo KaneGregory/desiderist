@@ -17,7 +17,7 @@ class ActionContext(BaseModel):
 
     desire_store: DesireStore
     conversation_repo: ConversationRepo
-    turn_id: str
+    turn_id: str | None
 
 
 class Action(Protocol):

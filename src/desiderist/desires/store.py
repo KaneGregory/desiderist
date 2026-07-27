@@ -6,6 +6,9 @@ from desiderist.persistence.repositories import DesireEventRepo, DesireRepo, new
 DEFAULT_PRIORITY = 3
 DEFAULT_CONFIDENCE = 0.7
 
+ONBOARDING_DESIRE_DESCRIPTION = "I want Desiderist to identify my initial desires"
+ONBOARDING_SEED_REASONING = "System-seeded onboarding desire for a new user — not extracted from user input."
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -18,6 +21,32 @@ def _row_to_desire(row: dict) -> Desire:
 def _desire_to_row(desire: Desire) -> dict:
     row = desire.model_dump(mode="json")
     return row
+
+
+def _new_desire(
+    *,
+    now: str,
+    user_id: str,
+    description: str,
+    priority: int,
+    confidence: float,
+    source_turn_id: str | None,
+    last_touched_turn_id: str | None,
+    supersedes_id: str | None = None,
+) -> Desire:
+    return Desire(
+        id=new_id(),
+        user_id=user_id,
+        description=description,
+        status=DesireStatus.ACTIVE,
+        priority=priority,
+        confidence=confidence,
+        created_at=now,
+        updated_at=now,
+        source_turn_id=source_turn_id,
+        last_touched_turn_id=last_touched_turn_id,
+        supersedes_id=supersedes_id,
+    )
 
 
 class DesireStore:
@@ -41,18 +70,14 @@ class DesireStore:
         now = _now_iso()
 
         if op.op == "create":
-            desire = Desire(
-                id=new_id(),
+            desire = _new_desire(
+                now=now,
                 user_id=user_id,
                 description=op.description,
-                status=DesireStatus.ACTIVE,
                 priority=op.priority or DEFAULT_PRIORITY,
                 confidence=op.confidence if op.confidence is not None else DEFAULT_CONFIDENCE,
-                created_at=now,
-                updated_at=now,
                 source_turn_id=turn_id,
                 last_touched_turn_id=turn_id,
-                supersedes_id=None,
             )
             self._desires.upsert(_desire_to_row(desire))
             return desire.id
@@ -88,15 +113,12 @@ class DesireStore:
             existing.last_touched_turn_id = turn_id
             self._desires.upsert(_desire_to_row(existing))
 
-            new_desire = Desire(
-                id=new_id(),
+            new_desire = _new_desire(
+                now=now,
                 user_id=user_id,
                 description=op.description,
-                status=DesireStatus.ACTIVE,
                 priority=op.priority or DEFAULT_PRIORITY,
                 confidence=op.confidence if op.confidence is not None else DEFAULT_CONFIDENCE,
-                created_at=now,
-                updated_at=now,
                 source_turn_id=turn_id,
                 last_touched_turn_id=turn_id,
                 supersedes_id=existing.id,
@@ -105,6 +127,30 @@ class DesireStore:
             return new_desire.id
 
         raise ValueError(f"Unknown op: {op.op}")
+
+    def seed_onboarding_desire(self, *, user_id: str = "local-user") -> Desire | None:
+        if self.all(user_id):
+            return None
+
+        desire = _new_desire(
+            now=_now_iso(),
+            user_id=user_id,
+            description=ONBOARDING_DESIRE_DESCRIPTION,
+            priority=DEFAULT_PRIORITY,
+            confidence=1.0,
+            source_turn_id=None,
+            last_touched_turn_id=None,
+        )
+        self._desires.upsert(_desire_to_row(desire))
+        self._events.add_event(
+            desire_id=desire.id,
+            op="create",
+            reasoning=ONBOARDING_SEED_REASONING,
+            diff={"description": desire.description},
+            raw_llm_response="",
+            turn_id=None,
+        )
+        return desire
 
     def active(self, user_id: str = "local-user") -> list[Desire]:
         return [_row_to_desire(row) for row in self._desires.list_active(user_id)]

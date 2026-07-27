@@ -23,8 +23,8 @@ class Desire(BaseModel):
     confidence: float
     created_at: datetime
     updated_at: datetime
-    source_turn_id: str
-    last_touched_turn_id: str
+    source_turn_id: str | None
+    last_touched_turn_id: str | None
     supersedes_id: str | None = None
 
 

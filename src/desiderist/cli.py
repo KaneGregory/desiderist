@@ -6,7 +6,7 @@ import typer
 from desiderist import __version__
 from desiderist.config import load_settings
 from desiderist.desires.store import DesireStore
-from desiderist.harness.loop import run_turn
+from desiderist.harness.loop import run_onboarding, run_turn
 from desiderist.llm.base import messages_from_turns
 from desiderist.llm.factory import build_llm_provider
 from desiderist.persistence.db import connect
@@ -51,6 +51,8 @@ def chat() -> None:
     action_log = ActionLogRepo(conn)
 
     typer.echo(f"desiderist chat (using {settings.resolved_provider}) — type 'exit' to quit")
+    run_onboarding(store=store, conversations=conversations, action_log=action_log)
+
     while True:
         try:
             user_input = typer.prompt(">")

@@ -100,6 +100,41 @@ def test_fulfill_op_marks_desire_fulfilled():
     assert all_desires[0].status == DesireStatus.FULFILLED
 
 
+def test_seed_onboarding_desire_creates_desire_for_empty_store():
+    conversations, store = make_store()
+
+    desire = store.seed_onboarding_desire()
+
+    assert desire is not None
+    assert desire.description == "I want Desiderist to identify my initial desires"
+    assert desire.status == DesireStatus.ACTIVE
+    assert desire.confidence == 1.0
+    assert desire.source_turn_id is None
+    assert desire.last_touched_turn_id is None
+
+    active = store.active()
+    assert len(active) == 1
+    assert active[0].id == desire.id
+    assert len(store.history(desire.id)) == 1
+
+
+def test_seed_onboarding_desire_is_noop_for_existing_user():
+    conversations, store = make_store()
+    provider = FakeLLMProvider(
+        extraction_responses=[
+            ExtractionResult(ops=[{"op": "create", "description": "wants coffee", "reasoning": "r"}])
+        ]
+    )
+    run_extraction(provider, store, conversations, "I'd like a coffee")
+
+    desire = store.seed_onboarding_desire()
+
+    assert desire is None
+    all_desires = store.all()
+    assert len(all_desires) == 1
+    assert all_desires[0].description == "wants coffee"
+
+
 def test_contradict_op_supersedes_and_creates_new_desire():
     conversations, store = make_store()
     create_provider = FakeLLMProvider(
