@@ -45,6 +45,29 @@ CREATE TABLE IF NOT EXISTS action_log (
     related_desire_ids_json TEXT,
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS capability_providers (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL DEFAULT 'local-user',
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    transport_json TEXT NOT NULL,
+    status TEXT NOT NULL,
+    registered_at TEXT NOT NULL,
+    decided_at TEXT,
+    last_connected_at TEXT,
+    last_error TEXT
+);
+
+CREATE TABLE IF NOT EXISTS capability_tools (
+    id TEXT PRIMARY KEY,
+    provider_id TEXT NOT NULL REFERENCES capability_providers(id),
+    tool_name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    input_schema_json TEXT NOT NULL,
+    discovered_at TEXT NOT NULL,
+    UNIQUE(provider_id, tool_name)
+);
 """
 
 

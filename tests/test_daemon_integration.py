@@ -5,6 +5,7 @@ import time
 import uuid
 from pathlib import Path
 
+from desiderist.capabilities import registry as capabilities_registry
 from desiderist.config import Settings
 from desiderist.daemon import server as daemon_server
 from desiderist.daemon.lifecycle import DaemonPaths
@@ -73,4 +74,8 @@ def test_daemon_serves_chat_desires_and_actions(monkeypatch):
     try:
         asyncio.run(scenario())
     finally:
+        # capabilities.registry holds a process-global reference to this daemon's loop
+        # and manager — without resetting it, a closed-loop reference would leak into
+        # any later, unrelated test that calls all_actions()/to_tool_specs().
+        capabilities_registry.reset()
         shutil.rmtree(directory, ignore_errors=True)

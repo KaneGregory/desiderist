@@ -6,7 +6,13 @@ from typing import Callable, TypeVar
 from desiderist.desires.store import DesireStore
 from desiderist.llm.base import LLMProvider
 from desiderist.persistence.db import connect
-from desiderist.persistence.repositories import ActionLogRepo, ConversationRepo, DesireEventRepo, DesireRepo
+from desiderist.persistence.repositories import (
+    ActionLogRepo,
+    CapabilityRepo,
+    ConversationRepo,
+    DesireEventRepo,
+    DesireRepo,
+)
 
 T = TypeVar("T")
 
@@ -17,6 +23,7 @@ class HarnessContext:
         self.conversations = ConversationRepo(conn)
         self.store = DesireStore(DesireRepo(conn), DesireEventRepo(conn))
         self.action_log = ActionLogRepo(conn)
+        self.capabilities = CapabilityRepo(conn)
         self.provider = provider
 
 

@@ -1,5 +1,5 @@
 from desiderist.actions.base import ActionContext, ActionResult
-from desiderist.actions.registry import get_action, to_tool_specs
+from desiderist.capabilities.registry import get_action, to_tool_specs
 from desiderist.desires.models import Desire
 from desiderist.llm.base import LLMProvider, LLMResponse, Message, ToolCall
 from desiderist.persistence.repositories import ActionLogRepo

@@ -2,13 +2,14 @@ import typer
 
 from desiderist import __version__
 from desiderist.config import load_settings
-from desiderist.daemon.cli import daemon_app
+from desiderist.daemon.cli import capabilities_app, daemon_app
 from desiderist.daemon.client import DaemonClient, DaemonNotRunningError
 from desiderist.daemon.lifecycle import DaemonPaths
 from desiderist.llm.base import messages_from_turns
 
 app = typer.Typer(add_completion=False)
 app.add_typer(daemon_app, name="daemon")
+app.add_typer(capabilities_app, name="capabilities")
 
 
 def _version_callback(value: bool) -> None:

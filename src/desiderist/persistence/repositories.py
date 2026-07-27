@@ -153,3 +153,84 @@ class ActionLogRepo:
             "SELECT * FROM action_log ORDER BY created_at DESC LIMIT ?", (limit,)
         ).fetchall()
         return [dict(r) for r in reversed(rows)]
+
+
+class CapabilityRepo:
+    def __init__(self, conn: sqlite3.Connection):
+        self._conn = conn
+
+    def register(self, *, name: str, description: str, transport_json: str, user_id: str = "local-user") -> dict:
+        provider = {
+            "id": new_id(),
+            "user_id": user_id,
+            "name": name,
+            "description": description,
+            "transport_json": transport_json,
+            "status": "pending",
+            "registered_at": now_iso(),
+            "decided_at": None,
+            "last_connected_at": None,
+            "last_error": None,
+        }
+        self._conn.execute(
+            """INSERT INTO capability_providers
+               (id, user_id, name, description, transport_json, status, registered_at,
+                decided_at, last_connected_at, last_error)
+               VALUES (:id, :user_id, :name, :description, :transport_json, :status, :registered_at,
+                       :decided_at, :last_connected_at, :last_error)""",
+            provider,
+        )
+        self._conn.commit()
+        return provider
+
+    def get(self, provider_id: str) -> dict | None:
+        row = self._conn.execute("SELECT * FROM capability_providers WHERE id = ?", (provider_id,)).fetchone()
+        return dict(row) if row else None
+
+    def list_all(self, user_id: str = "local-user") -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM capability_providers WHERE user_id = ? ORDER BY registered_at DESC", (user_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def set_status(self, provider_id: str, status: str) -> None:
+        self._conn.execute(
+            "UPDATE capability_providers SET status = ?, decided_at = ? WHERE id = ?",
+            (status, now_iso(), provider_id),
+        )
+        self._conn.commit()
+
+    def record_connected(self, provider_id: str) -> None:
+        self._conn.execute(
+            "UPDATE capability_providers SET last_connected_at = ?, last_error = NULL WHERE id = ?",
+            (now_iso(), provider_id),
+        )
+        self._conn.commit()
+
+    def record_error(self, provider_id: str, error: str) -> None:
+        self._conn.execute("UPDATE capability_providers SET last_error = ? WHERE id = ?", (error, provider_id))
+        self._conn.commit()
+
+    def replace_tools(self, provider_id: str, tools: list[dict]) -> None:
+        self._conn.execute("DELETE FROM capability_tools WHERE provider_id = ?", (provider_id,))
+        for tool in tools:
+            self._conn.execute(
+                """INSERT INTO capability_tools
+                   (id, provider_id, tool_name, description, input_schema_json, discovered_at)
+                   VALUES (:id, :provider_id, :tool_name, :description, :input_schema_json, :discovered_at)""",
+                {
+                    "id": new_id(),
+                    "provider_id": provider_id,
+                    "tool_name": tool["tool_name"],
+                    "description": tool["description"],
+                    "input_schema_json": tool["input_schema_json"],
+                    "discovered_at": now_iso(),
+                },
+            )
+        self._conn.commit()
+
+    def list_tools(self, provider_id: str) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM capability_tools WHERE provider_id = ? ORDER BY tool_name", (provider_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
