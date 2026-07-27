@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Callable, Protocol
 
 from pydantic import BaseModel, ConfigDict
 
@@ -18,6 +18,7 @@ class ActionContext(BaseModel):
     desire_store: DesireStore
     conversation_repo: ConversationRepo
     turn_id: str | None
+    reply_sink: Callable[[str], None] = print
 
 
 class Action(Protocol):

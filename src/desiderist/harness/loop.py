@@ -1,3 +1,5 @@
+from typing import Callable
+
 import desiderist.actions  # noqa: F401 — registers built-in actions
 from desiderist.actions.base import ActionContext, ActionResult
 from desiderist.actions.communicate import COMMUNICATE_WITH_USER
@@ -38,6 +40,7 @@ def run_turn(
     conversations: ConversationRepo,
     action_log: ActionLogRepo,
     user_message: str,
+    reply_sink: Callable[[str], None] = print,
 ) -> list[ActionResult]:
     turn = conversations.add_turn(role="user", content=user_message)
     recent = messages_from_turns(conversations.recent(limit=RECENT_TURN_LIMIT))
@@ -53,7 +56,9 @@ def run_turn(
     all_results: list[ActionResult] = []
     while True:
         response = _with_fallback_reply(plan_next_actions(provider, active_desires=store.active(), recent_turns=recent))
-        ctx = ActionContext(desire_store=store, conversation_repo=conversations, turn_id=turn["id"])
+        ctx = ActionContext(
+            desire_store=store, conversation_repo=conversations, turn_id=turn["id"], reply_sink=reply_sink
+        )
         results = dispatch_tool_calls(response.tool_calls, ctx=ctx, action_log=action_log)
         all_results.extend(results)
 
@@ -71,6 +76,7 @@ def run_onboarding(
     conversations: ConversationRepo,
     action_log: ActionLogRepo,
     user_id: str = "local-user",
+    reply_sink: Callable[[str], None] = print,
 ) -> list[ActionResult] | None:
     """Skips the LLM planner entirely — there's no conversation yet for it to plan over."""
     desire = store.seed_onboarding_desire(user_id=user_id)
@@ -78,5 +84,5 @@ def run_onboarding(
         return None
 
     call = ToolCall(id="onboarding", name=COMMUNICATE_WITH_USER, input={"message": ONBOARDING_MESSAGE})
-    ctx = ActionContext(desire_store=store, conversation_repo=conversations, turn_id=None)
+    ctx = ActionContext(desire_store=store, conversation_repo=conversations, turn_id=None, reply_sink=reply_sink)
     return dispatch_tool_calls([call], ctx=ctx, action_log=action_log)

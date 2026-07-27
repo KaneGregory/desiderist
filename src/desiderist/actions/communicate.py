@@ -16,6 +16,6 @@ class CommunicateWithUserAction:
     }
 
     def execute(self, params: dict, ctx: ActionContext) -> ActionResult:
-        print(params["message"])
+        ctx.reply_sink(params["message"])
         ctx.conversation_repo.add_turn(role="assistant", content=params["message"])
         return ActionResult(success=True, output={}, requires_user_input=True)

@@ -38,6 +38,18 @@ Force a specific backend regardless of what's set with `DESIDERIST_LLM_PROVIDER=
 
 ## Usage
 
+A background daemon owns the database and the harness loop; `chat`/`desires`/`actions` are
+thin clients that talk to it over a local Unix socket. Start it first:
+
+```bash
+desiderist daemon start   # starts in the background
+desiderist daemon status  # check whether it's running
+desiderist daemon stop    # stop it
+```
+
+Use `desiderist daemon start --foreground` to run it attached to your terminal (useful for
+development — logs go straight to stdout instead of `~/.desiderist/daemon.log`).
+
 ```bash
 desiderist chat      # interactive chat loop — type 'exit' to quit
 desiderist desires    # inspect currently tracked desires
@@ -46,9 +58,11 @@ desiderist desires --history <id>     # full audit trail for one desire
 desiderist actions    # inspect the action log — what the harness actually did
 ```
 
-By default, state is stored in `~/.desiderist/desiderist.db`. Override with
-`DESIDERIST_DB_PATH`. Claude models used for chat/extraction/planning can be overridden with
-`DESIDERIST_CHAT_MODEL`, `DESIDERIST_EXTRACTION_MODEL`, and `DESIDERIST_PLANNING_MODEL`.
+By default, state is stored in `~/.desiderist/desiderist.db`, alongside the daemon's lock,
+pid, socket, and log files. Override the database location with `DESIDERIST_DB_PATH` (the
+daemon's other files follow it, living in the same directory). Claude models used for
+chat/extraction/planning can be overridden with `DESIDERIST_CHAT_MODEL`,
+`DESIDERIST_EXTRACTION_MODEL`, and `DESIDERIST_PLANNING_MODEL`.
 
 ## Development
 
